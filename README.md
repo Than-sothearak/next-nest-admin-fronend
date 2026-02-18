@@ -1,7 +1,4 @@
-# TICC Website & Admin Dashboard
-
-This is a Next.js 14 project for managing and displaying content for Techno Innovation Challenge Cambodia (TICC).  
-The project includes an admin dashboard, public website, MongoDB database, Google authentication, and AWS S3 image storage.
+# Admin Dashboard
 
 ---
 
@@ -78,10 +75,5 @@ Node.js
 
 ---
 
-## Notes
 
-Only emails in the admins collection can log in to the admin dashboard.  
-Make sure MongoDB and AWS S3 credentials are configured correctly.
-
----
 
