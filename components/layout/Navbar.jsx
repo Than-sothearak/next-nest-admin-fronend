@@ -2,14 +2,12 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { IoMdMenu } from "react-icons/io";
-import SideBarMain from "@/components/layout/SideBarMain";
 import ProfileUser from "./ProfileUser";
 import { NavbarContext } from "./NavbarContext";
 import { useContext } from "react";
 
-export const Navbar = ({ session, user, navigation, servicesCount, link }) => {
-  const { handleClick, isOpen, setIsOpen } = useContext(NavbarContext);
-
+export const Navbar = ({ currentUser }) => {
+   const { handleClick, isOpen, setIsOpen } = useContext(NavbarContext);
   const pathName = usePathname();
   const pathArray = pathName.split("/").filter(Boolean);
 
@@ -48,20 +46,10 @@ export const Navbar = ({ session, user, navigation, servicesCount, link }) => {
             })}
           </nav>
         </div>
-        <ProfileUser currentUser={user} />
+        <ProfileUser currentUser={currentUser} />
       </div>
 
-      <div className="lg:hidden">
-        <SideBarMain
-          link={link}
-          servicesCount={servicesCount}
-          navigation={navigation}
-          currentUser={user}
-          handleClick={handleClick}
-          isOpen={isOpen}
-          session={session}
-        />
-      </div>
+    
       {/* Overlay (closes sidebar when clicked) */}
       {isOpen && (
         <div

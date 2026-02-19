@@ -3,14 +3,16 @@ import ChooseSingleImageFile from "@/components/ChooseSingleImage";
 import { useState } from "react";
 import { formatDateForForm } from "@/utils/formatDate";
 import { useRouter } from "next/navigation";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import ChangPasswordForm from "../ChangPasswordForm";
 
-export default function UserForm({ userId, userData }) {
+export default function UserForm({ userId, userData, session }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [password, setPassword] = useState();
+  const [errors, setErrors] = useState(null);
   const [formData, setFormData] = useState({
-    username: userData?.username || "", // ✅ FIX
+    username: userData?.username || "",
     email: userData?.email || "",
     phone: userData?.phone || "",
     gender: userData?.gender || "male",
@@ -18,8 +20,8 @@ export default function UserForm({ userId, userData }) {
     dateOfBirth: userData?.dateOfBirth || "",
     address: userData?.address || "",
     telegramChatId: userData?.telegramChatId || "",
-    isAdmin: userData?.isAdmin ?? false, // ✅ FIX
-    roles: ['user'],
+    isAdmin: userData?.isAdmin ?? false,
+    roles: ["user"],
     imageUrl: userData?.imageUrl || "",
   });
 
@@ -36,15 +38,15 @@ export default function UserForm({ userId, userData }) {
     e.preventDefault();
     setLoading(true);
 
-      // Ensure dateOfBirth is a proper Date object
-  const payload = {
-    ...formData,
-    dateOfBirth: formData.dateOfBirth
-      ? new Date(formData.dateOfBirth)
-      : null,
-  };
+    // Ensure dateOfBirth is a proper Date object
+    const payload = {
+      ...formData,
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : null,
+    };
 
-    let url = userId ? `http://localhost:3000/users/${userId}` : `http://localhost:3000/users/`;
+    let url = userId
+      ? `http://localhost:3000/users?id=${userId}`
+      : `http://localhost:3000/users/`;
     let method;
     if (userId) {
       method = "PATCH";
@@ -55,23 +57,38 @@ export default function UserForm({ userId, userData }) {
     try {
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        const fieldErrors = {};
 
-      if (res.ok) {
+        if (Array.isArray(data.message)) {
+          data.message.forEach((msg) => {
+            if (msg.includes("username")) fieldErrors.username = msg;
+            if (msg.includes("email")) fieldErrors.email = msg;
+            if (msg.includes("password")) fieldErrors.password = msg;
+            if (msg.includes("gender")) fieldErrors.gender = msg;
+          });
+        }
+               setErrors(fieldErrors);
+        setSuccess(false);
+        toast.error(data.message || "Validation error!");
+        setLoading(false);
+      } else {
+ 
         setSuccess(data.success);
         toast.success(data.message || "Success!");
         router.refresh(); // refresh page
         setLoading(false);
-      } else {
-        setSuccess(false);
-        toast.error(data.message || "Failed!");
       }
     } catch (err) {
-      toast.error("Something went wrong!");
+      toast.error("Something went wrong!" + " " + err.message);
     } finally {
       setLoading(false);
     }
@@ -91,9 +108,9 @@ export default function UserForm({ userId, userData }) {
 
   // if (session?.user?.isAdmin || session?.user?._id === userId)
   return (
-    <div className="text-lg w-[978px] max-2xl:w-full mx-auto bg-primary border rounded-xl relative">
+    <div className="text-sm w-[978px] max-2xl:w-full mx-auto bg-primary border rounded-xl relative">
       <div className="bg-primary text-center p-4 rounded-t-xl">
-        <h1 className="font-bold text-lg">
+        <h1 className="font-bold text-sm">
           {userId ? "Edit user" : "Create new user"}
         </h1>
       </div>
@@ -106,7 +123,7 @@ export default function UserForm({ userId, userData }) {
           <ChooseSingleImageFile
             imageUrl={formData?.imageUrl || "/images/user.png"}
           />
-          <h2 className="text-lg font-bold mt-4 text-center">
+          <h2 className="text-sm font-bold mt-4 text-center">
             {formData.role === "admin" ? "Admin" : "User"}
           </h2>
         </div>
@@ -116,7 +133,7 @@ export default function UserForm({ userId, userData }) {
             <div>
               <label
                 htmlFor="name"
-                className="block text-lg font-bold text-primarytext mb-1"
+                className="block text-sm font-bold text-primarytext mb-1"
               >
                 Full Name
               </label>
@@ -127,20 +144,17 @@ export default function UserForm({ userId, userData }) {
                 defaultValue={formData?.username}
                 onChange={handleChange}
                 placeholder="John Doe"
-                className="text-lg bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all border-secondary appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
+                className="text-sm bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all border-secondary appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
               />
-              {/* {state?.errors?.name && (
-                  <p className="mt-1 text-lg text-red-600">
-                    {state.errors.name}
-                  </p>
-                )} */}
+                {errors?.username && <p className="text-red-500">{errors.username}</p>}
+          
             </div>
 
             {/* Email Field */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-lg font-bold text-primarytext mb-1"
+                className="block text-sm font-bold text-primarytext mb-1"
               >
                 Email Address
               </label>
@@ -151,20 +165,16 @@ export default function UserForm({ userId, userData }) {
                 defaultValue={formData?.email}
                 onChange={handleChange}
                 placeholder="john@example.com"
-                className="text-lg bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent border-secondary outline-none focus:ring-2 focus:border-none"
+                className="text-sm bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent border-secondary outline-none focus:ring-2 focus:border-none"
               />
-              {/* {state?.errors?.email && (
-                  <p className="mt-1 text-lg text-red-600">
-                    {state.errors.email}
-                  </p>
-                )} */}
+                 {errors?.email && <p className="text-red-500">{errors.email}</p>}
             </div>
 
             {/* Phone Field */}
             <div>
               <label
                 htmlFor="phone"
-                className="block text-lg font-bold text-primarytext mb-1"
+                className="block text-sm font-bold text-primarytext mb-1"
               >
                 Phone Number
               </label>
@@ -175,10 +185,10 @@ export default function UserForm({ userId, userData }) {
                 defaultValue={formData?.phone}
                 onChange={handleChange}
                 placeholder="+ (855) 123 456"
-                className="text-lg bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none border-secondary "
+                className="text-sm bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none border-secondary "
               />
               {/* {state?.errors?.phone && (
-                  <p className="mt-1 text-lg text-red-600">{state.errors.phone}</p>
+                  <p className="mt-1 text-sm text-red-600">{state.errors.phone}</p>
                 )} */}
             </div>
 
@@ -187,7 +197,7 @@ export default function UserForm({ userId, userData }) {
                 <div>
                   <label
                     htmlFor="role"
-                    className="block font-bold  text-lg mb-1"
+                    className="block font-bold  text-sm mb-1"
                   >
                     User Role
                   </label>
@@ -196,7 +206,7 @@ export default function UserForm({ userId, userData }) {
                     id="role"
                     defaultValue={formData?.role}
                     onChange={handleChange}
-                    className="text-lg bg-primary w-full px-4 py-2.5 rounded-lg border border-secondary  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all "
+                    className="text-sm bg-primary w-full px-4 py-2.5 rounded-lg border border-secondary  focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all "
                   >
                     <option value="user">User</option>
                     <option value="admin">Administrator</option>
@@ -210,7 +220,7 @@ export default function UserForm({ userId, userData }) {
               defaultValue={formData?.role}
               onChange={handleChange}
               placeholder="123 Main St, City, Country"
-              className="text-lg bg-secondary hidden border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
+              className="text-sm bg-secondary hidden border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
             />
             {/* )} */}
           </div>
@@ -221,7 +231,7 @@ export default function UserForm({ userId, userData }) {
               <div className="w-full">
                 <label
                   htmlFor="dateOfBirth"
-                  className="block text-lg font-bold text-primarytext mb-1"
+                  className="block text-sm font-bold text-primarytext mb-1"
                 >
                   Date of Birth
                 </label>
@@ -232,14 +242,14 @@ export default function UserForm({ userId, userData }) {
                   value={formatDateForForm(formData?.dateOfBirth) || ""}
                   onChange={handleChange}
                   placeholder="123 Main St, City, Country"
-                  className="text-lg bg-secondary border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
+                  className="text-sm bg-secondary border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
                 />
               </div>
 
               <div className="w-full">
                 <label
                   htmlFor="address"
-                  className="block text-lg font-bold text-primarytext mb-1"
+                  className="block text-sm font-bold text-primarytext mb-1"
                 >
                   Gender
                 </label>
@@ -269,7 +279,7 @@ export default function UserForm({ userId, userData }) {
                   </div>
                 </div>
                 {/* {state?.errors?.gender && (
-                    <p className="mt-1 text-lg text-red-600">
+                    <p className="mt-1 text-sm text-red-600">
                       {state.errors.gender}
                     </p>
                   )} */}
@@ -299,7 +309,7 @@ export default function UserForm({ userId, userData }) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-lg font-bold text-primarytext mb-1"
+                  className="block text-sm font-bold text-primarytext mb-1"
                 >
                   Telegram Id
                 </label>
@@ -310,7 +320,7 @@ export default function UserForm({ userId, userData }) {
                   defaultValue={formData?.telegramChatId || ""}
                   onChange={handleChange}
                   placeholder="Na"
-                  className="text-lg bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent border-secondary outline-none focus:ring-2 focus:border-none"
+                  className="text-sm bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent border-secondary outline-none focus:ring-2 focus:border-none"
                 />
               </div>
             </div>
@@ -321,7 +331,7 @@ export default function UserForm({ userId, userData }) {
           <div className="">
             <label
               htmlFor="address"
-              className="block text-lg font-bold text-primarytext mb-1"
+              className="block text-sm font-bold text-primarytext mb-1"
             >
               Address
             </label>
@@ -332,10 +342,10 @@ export default function UserForm({ userId, userData }) {
               defaultValue={formData.address}
               onChange={handleChange}
               placeholder="123 Main St, City, Country"
-              className="text-lg bg-secondary border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
+              className="text-sm bg-secondary border w-full border-secondary  px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
             />
             {/* {state?.errors?.address && (
-                <p className="mt-1 text-lg text-red-600">
+                <p className="mt-1 text-sm text-red-600">
                   {state.errors.address}
                 </p>
               )} */}
@@ -345,7 +355,7 @@ export default function UserForm({ userId, userData }) {
             <div className="">
               <label
                 htmlFor="password"
-                className="block text-lg font-bold text-primarytext mb-1"
+                className="block text-sm font-bold text-primarytext mb-1"
               >
                 Password
               </label>
@@ -363,7 +373,7 @@ export default function UserForm({ userId, userData }) {
                 className="bg-secondary border w-full px-4 py-2.5 rounded-lg transition-all appearance-none bg-transparent outline-none focus:ring-2 focus:border-none"
               />
               {/* {state?.errors?.password && (
-                  <p className="mt-1 text-lg text-red-600">
+                  <p className="mt-1 text-sm text-red-600">
                     {state.errors.password}
                   </p>
                 )} */}
@@ -417,49 +427,10 @@ export default function UserForm({ userId, userData }) {
               )}
             </button>
           </div>
-
-          {/* Status Messages */}
-          {success ? (
-            <Toaster
-              position="top-center"
-              reverseOrder={false}
-              gutter={8}
-              containerClassName=""
-              containerStyle={{}}
-              toastOptions={{
-                // Define default options
-                className: "",
-                duration: 5000,
-                removeDelay: 1000,
-                style: {
-                  background: "oklch(79.2% 0.209 151.711)",
-                  color: "#fff",
-                },
-              }}
-            />
-          ) : (
-            <Toaster
-              position="top-center"
-              reverseOrder={false}
-              gutter={8}
-              containerClassName=""
-              containerStyle={{}}
-              toastOptions={{
-                // Define default options
-                className: "",
-                duration: 5000,
-                removeDelay: 1000,
-                style: {
-                  background: "oklch(70.4% 0.191 22.216)",
-                  color: "#fff",
-                },
-              }}
-            />
-          )}
         </div>
       </form>
 
-      {/* {userId && (
+      {userId && (
         <>
           <div className="border-b border-secondary"></div>
           <ChangPasswordForm
@@ -469,7 +440,7 @@ export default function UserForm({ userId, userData }) {
             userId={userId}
           />
         </>
-      )} */}
+      )}
     </div>
   );
 }

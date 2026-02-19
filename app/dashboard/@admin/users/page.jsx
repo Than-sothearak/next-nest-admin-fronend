@@ -17,10 +17,11 @@ const UserPage = async ({ searchParams }) => {
     redirect("/login");
   
   }
+   const params = await searchParams;
 
-  const query = searchParams?.query || "";
-  const page = parseInt(searchParams?.page) || 1;
-  const limit = parseInt(searchParams?.limit) || 10;
+  const query = params?.query || "";
+  const page = parseInt(params?.page) || 1;
+  const limit = parseInt(params?.limit) || 10;
 
   const { users, countPage, totalItems } = await getUsers(query, page, limit);
 

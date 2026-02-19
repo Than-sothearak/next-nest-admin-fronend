@@ -11,7 +11,7 @@ export const SidebarList = ({ navList, handleClick, servicesCount }) => {
   const currentBasePath = pathName.split("/").filter(Boolean).slice(0, 2).join("/");
 
   return (
-    <div className="mt-8 font-bold">
+    <div className="font-bold">
       {navList.name}
       <ul className="h-full flex flex-col gap-1 mt-2 cursor-pointer">
         {navList.links.map((item) => {

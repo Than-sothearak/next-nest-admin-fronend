@@ -32,7 +32,7 @@ export const authOptions = {
             id: data.user.id,
             email: data.user.email,
             name: data.user.username,
-            accessToken: data.user.accessToken,
+            accessToken: data.accessToken,
           };
         } catch (error) {
           console.error("Error in authorize:", error);

@@ -1,28 +1,73 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getServerSession } from "next-auth";
-import SideBarMain from "./SideBarMain";
+"use client";
+import React, { useContext, useState } from "react";
+import { SidebarList } from "./SidebarList";
+import { IoClose } from "react-icons/io5";
+import { HiMenuAlt2 } from "react-icons/hi";
+import { SidebarListMobile } from "./SidebarListMobile";
+import { NavbarContext } from "./NavbarContext";
 
-export default async function Sidebar({ navigation, servicesCount, link }) {
-  const session = await getServerSession(authOptions);
-  const userId = session.user.id;
-  const data = await fetch(
-    `${process.env.BASE_URL}/users/${userId}`,
+const Sidebar = ({ currentUser, navigation, servicesCount, link }) => {
+   const { handleClick, isOpen, setIsOpen } = useContext(NavbarContext);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  ).then(res => {
-    if (!res.ok) {
-      throw new Error("Failed to fetch user data");
-    }
-    return res.json();
-  });
-  const user = JSON.parse(JSON.stringify(data));
+  const session = currentUser ? { user: currentUser } : null;
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => !prev);
+
+  };
+
+
   return (
-    <>
-      <SideBarMain
-        link={link}
-        servicesCount={servicesCount}
-        navigation={navigation}
-        user={user}
-      />
-    </>
+    <div
+      className={`bg-primary text-primarytext ${isCollapsed ? 'p-0' : 'p-2'} h-full overflow-y-auto transition-all duration-300 ease-in-out
+        max-lg:fixed top-0 left-0 z-50
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        ${isCollapsed ? "w-14 justify-start flex-col items-center flex " : "w-80  "} 
+        lg:translate-x-0  `}
+    >
+      {/* Top Section */}
+      <div className="flex items-center justify-between pb-2 mt-2 border-b">
+
+        {!isCollapsed && (<div className="font-bold whitespace-nowrap">Admin Dashboard</div>)
+
+        }
+
+        {/* Toggle Menu Button */}
+        <button
+          onClick={toggleCollapse}
+          className="p-2 hover:bg-secondary rounded-full max-lg:hidden"
+        >
+          <HiMenuAlt2 size={22} />
+        </button>
+
+        {/* Close Button for mobile */}
+        {!isCollapsed && (
+          <button onClick={handleClick} className="lg:hidden">
+            <IoClose size={28} />
+          </button>
+        )}
+      </div>
+
+
+      {isCollapsed && (
+        <div className="z-50">
+          <SidebarListMobile navList={navigation} />
+        </div>
+      )}
+
+      {/* Navigation Menu */}
+
+      <div className={`mt-2 ${isCollapsed ? 'hidden' : 'w-full'}`}>
+        <SidebarList
+          servicesCount={servicesCount}
+          navList={navigation}
+          handleClick={handleClick}
+          isCollapsed={isCollapsed}
+        />
+      </div>
+
+    </div>
   );
-}
+};
+
+export default Sidebar;

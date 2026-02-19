@@ -6,7 +6,7 @@ import ChooseSingleImageFile from '../ChooseSingleImage'
 import { IoMdClose } from 'react-icons/io'
 import SignOutButton from '../SignOutButton'
 
-const ProfileUser = ({ currentUser, isCollapsed, session }) => {
+const ProfileUser = ({ currentUser, session }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   return (
     <div className="relative">
@@ -53,6 +53,7 @@ const ProfileUser = ({ currentUser, isCollapsed, session }) => {
               <p className="text-2xl">Welcome, {currentUser?.username}!</p>
 
               <Link
+              onClick={()=> setIsProfileOpen(false)}
                 href={`/dashboard/users/${currentUser?.id}`}
                 className="bg-slate-200 hover:bg-slate-300  w-full text-center flex gap-2 justify-center items-center border border-slate-300 p-4 rounded-xl cursor-pointer"
               >
