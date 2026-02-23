@@ -1,3 +1,4 @@
+import { jwtDecode } from "jwt-decode";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
@@ -24,16 +25,22 @@ export const authOptions = {
           const data = await res.json();
 
           if (!res.ok) {
-            // 🔥 Pass backend message here
+            // Pass backend message here
             throw new Error(data.message || "Login failed");
           }
-
+          if (res.ok && data.success) {
+          // 2. Decode the token to get user details (id, email, username)
+          const decoded = jwtDecode(data.accessToken);
+          
+          // 3. Return an object that includes the token and the user data
           return {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.username,
+            id: decoded.id,
+            email: decoded.email,
+            username: decoded.username,
             accessToken: data.accessToken,
           };
+          }
+
         } catch (error) {
           console.error("Error in authorize:", error);
           return null;
@@ -43,10 +50,10 @@ export const authOptions = {
   ],
   session: {
     strategy: "jwt", // stores session in a secure JWT cookie
-     maxAge: 60 * 60 * 2, // ✅ 2 hours
+     maxAge: 60 * 60 * 2, //  2 hours
   },
     jwt: {
-    maxAge: 60 * 60 * 2, // ✅ 2 hours
+    maxAge: 60 * 60 * 2, // 2 hours
   },
   pages: {
     signIn: "/login", // custom login page
