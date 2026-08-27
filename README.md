@@ -1,5 +1,5 @@
 # Admin Dashboard
-
+Next Nest Admin Dashboard is a full-stack admin management system with a Next.js 15 frontend connected to a NestJS REST API backend. It provides authentication, user management, database integration, cloud file storage, analytics, and various third-party service integrations through a modern and responsive admin interface.
 ---
 
 ## Getting Started
